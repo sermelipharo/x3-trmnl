@@ -64,6 +64,8 @@ p { margin: 0 0 18px; color: #555; }
 label { display: block; margin: 14px 0 6px; font-weight: 600; }
 input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
 button { margin-top: 22px; width: 100%; padding: 12px; background: #000; color: white; border: 0; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
+.presets { display: flex; gap: 8px; margin-top: 8px; }
+.presets .preset { flex: 1; margin-top: 0; padding: 8px; background: #eee; color: #000; font-size: 14px; font-weight: 500; }
 .msg { margin-bottom: 18px; padding: 10px 12px; background: #fff7d6; border: 1px solid #f0d872; border-radius: 8px; }
 .err { background: #ffd6d6; border-color: #f08585; }
 </style></head><body>
@@ -103,6 +105,10 @@ button { margin-top: 22px; width: 100%; padding: 12px; background: #000; color: 
 <input type="url" name="server" id="server" placeholder="https://your-byos-host" value=")";
   html += htmlEscape(String(TRMNL_STATE.getServerBaseUrl().c_str()));
   html += R"(" autocomplete="off">
+<div class="presets">
+  <button type="button" class="preset" onclick="document.getElementById('server').value='https://usetrmnl.com'">Use TRMNL cloud</button>
+  <button type="button" class="preset" onclick="document.getElementById('server').value=''">Clear</button>
+</div>
 <button type="submit">Save & reboot</button>
 </form>
 </div></body></html>)";
