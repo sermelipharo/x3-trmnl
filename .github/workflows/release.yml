@@ -1,40 +1,77 @@
-name: Compile Release
+name: release
+
 on:
   push:
     tags:
-      - '*'
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (must already exist)"
+        required: true
+
+permissions:
+  contents: write
 
 jobs:
-  build-release:
+  release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
         with:
           submodules: recursive
+          ref: ${{ inputs.tag || github.ref }}
 
-      - uses: actions/setup-python@v6
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.14'
+          python-version: "3.12"
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
         with:
-          version: "latest"
-          enable-cache: false
-
-      - name: Install PlatformIO Core
-        run: uv pip install --system -U https://github.com/pioarduino/platformio-core/archive/refs/tags/v6.1.19.zip
-
-      - name: Build CrossPoint
-        run: pio run -e gh_release
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: CrossPoint-${{ github.ref_name }}
           path: |
-            .pio/build/gh_release/bootloader.bin
-            .pio/build/gh_release/firmware.bin
-            .pio/build/gh_release/firmware.elf
-            .pio/build/gh_release/firmware.map
-            .pio/build/gh_release/partitions.bin
+            ~/.platformio
+            ~/.cache/pip
+          key: pio-${{ runner.os }}-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            pio-${{ runner.os }}-
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -U platformio
+
+      - name: Build
+        run: pio run
+
+      - name: Resolve tag
+        id: tag
+        run: |
+          TAG="${{ inputs.tag || github.ref_name }}"
+          echo "name=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Stage release artifacts
+        run: |
+          mkdir -p dist
+          cp .pio/build/default/firmware.bin   dist/firmware.bin
+          cp .pio/build/default/bootloader.bin dist/bootloader.bin
+          cp .pio/build/default/partitions.bin dist/partitions.bin
+          cd dist
+          sha256sum *.bin > SHA256SUMS.txt
+          ls -la
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.name }}
+          name: ${{ steps.tag.outputs.name }}
+          draft: false
+          prerelease: ${{ contains(steps.tag.outputs.name, '-') }}
+          generate_release_notes: true
+          files: |
+            dist/firmware.bin
+            dist/bootloader.bin
+            dist/partitions.bin
+            dist/SHA256SUMS.txt

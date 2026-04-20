@@ -155,13 +155,36 @@ pio run
 
 ## Flashing
 
-The recommended path is the browser-based flasher at
-<https://x3.crosspointreader.com>, which uses WebSerial +
-`esptool-js` and matches the upload behaviour the X3 USB-Serial-JTAG
-peripheral expects. CLI `pio run -t upload` also works; if it fails
-mid-handshake, check for background processes holding the port
-(`lsof /dev/cu.usb*`) — a stuck serial reader will corrupt SLIP
-frames in ways that look like hardware faults.
+Two supported paths. In both cases, grab `firmware.bin` (plus
+`bootloader.bin` and `partitions.bin` if you want a full-flash) from
+the [Releases page](https://github.com/sermelipharo/x3-trmnl/releases)
+— every tagged release ships those artifacts and a `SHA256SUMS.txt`.
+
+**Browser flasher (recommended).** Open
+<https://x3.crosspointreader.com> in Chrome / Edge / Arc, click
+*Flash from file*, and select the `firmware.bin` you downloaded. It
+uses WebSerial + `esptool-js` and matches the upload behaviour the
+X3 USB-Serial-JTAG peripheral expects, including the dual-OTA
+partition switch.
+
+**CLI flasher.** After building with `pio run`, use
+`scripts/flash.sh`:
+
+```
+scripts/flash.sh              # full flash (bootloader + partitions + app)
+scripts/flash.sh firmware-only  # app partition only; faster
+```
+
+The script busy-waits for the port to appear (the X3 only enumerates
+while awake — tap the power button once after starting). Raw
+`pio run -t upload` works too; if it fails mid-handshake, check for
+background processes holding the port (`lsof /dev/cu.usb*`) — a
+stuck serial reader will corrupt SLIP frames in ways that look like
+hardware faults.
+
+See [`docs/flashing.md`](docs/flashing.md) for the full recipe,
+first-time provisioning, how to re-enter the captive portal, and
+recovery if something bricks.
 
 ## Known gaps
 
