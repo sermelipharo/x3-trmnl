@@ -1,8 +1,10 @@
+#include <BoardConfig.h>
 #include <HalGPIO.h>
 #include <Logging.h>
 #include <Preferences.h>
 #include <SPI.h>
 #include <Wire.h>
+#include <XteinkDetect.h>
 #include <esp_sleep.h>
 
 // Global HalGPIO instance
@@ -191,15 +193,27 @@ HalGPIO::DeviceType detectDeviceTypeWithFingerprint() {
 }  // namespace
 
 void HalGPIO::begin() {
-  inputMgr.begin();
-  SPI.begin(EPD_SCLK, SPI_MISO, EPD_MOSI, EPD_CS);
-
   _deviceType = detectDeviceTypeWithFingerprint();
+  BoardConfig::selectDevice(deviceIsX3() ? BoardConfig::Board::XteinkX3 : BoardConfig::Board::XteinkX4);
+
+  // Resolve the production-batch display controller before hardware SPI or
+  // the SD card claims the shared pins. The bit-banged probe releases those
+  // pins when it finishes, so running it after SPI.begin() can leave the
+  // display bus configured as inputs.
+  freeink::applyXteinkDisplayController();
+  if (deviceIsX3() && BoardConfig::ACTIVE.displayController == BoardConfig::DisplayController::UC8279) {
+    // Preserve the detected controller when HalDisplay::setDisplayX3() runs.
+    BoardConfig::selectDevice(BoardConfig::Board::XteinkX3Uc8279);
+  }
+
+  SPI.begin(EPD_SCLK, SPI_MISO, EPD_MOSI, EPD_CS);
 
   if (deviceIsX4()) {
     pinMode(BAT_GPIO0, INPUT);
     pinMode(UART0_RXD, INPUT);
   }
+
+  inputMgr.begin();
 }
 
 void HalGPIO::update() {

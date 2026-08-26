@@ -65,7 +65,8 @@ All upstream copyrights belong to their respective authors. See
 ## Hardware
 
 - **Xteink X3** (ESP32-C3 RISC-V, 16 MB flash, ~320 KB DRAM)
-- **SSD1677-family e-ink** panel, 792×528, 1-bpp
+- **UC8253 or UC8279d e-ink controller** (production-batch dependent),
+  792×528, 1-bpp; detected automatically at boot
 - **BQ27220** fuel gauge over I²C
 - MOSFET-off battery latch controlled by GPIO13. The timer-wake path
   holds GPIO13 HIGH through deep sleep so the MCU's RTC stays powered
@@ -73,7 +74,7 @@ All upstream copyrights belong to their respective authors. See
   without an external RTC.
 
 Other ESP32-C3 hardware with a compatible e-ink panel can be adapted
-by editing the HAL layer under `lib/hal/` and `open-x4-sdk/`.
+by editing the HAL layer under `lib/hal/` and `freeink-sdk/`.
 
 ## BYOD protocol compliance
 
@@ -173,6 +174,7 @@ window after each wake:
 
 ```
 pip install -U platformio
+git submodule update --init --recursive
 cp platformio.example.ini platformio.local.ini   # edit as needed
 pio run
 ```

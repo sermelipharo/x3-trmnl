@@ -1,5 +1,7 @@
+#include <BoardConfig.h>
 #include <HalDisplay.h>
 #include <HalGPIO.h>
+#include <Logging.h>
 
 // Global HalDisplay instance
 HalDisplay display;
@@ -16,7 +18,11 @@ void HalDisplay::begin() {
     einkDisplay.setDisplayX3();
   }
 
+  LOG_INF("DISPLAY", "Initializing controller=%s (%ux%u)",
+          BoardConfig::ACTIVE.displayController == BoardConfig::DisplayController::UC8279 ? "UC8279" : "primary",
+          einkDisplay.getDisplayWidth(), einkDisplay.getDisplayHeight());
   einkDisplay.begin();
+  LOG_INF("DISPLAY", "Controller initialized");
 
   // Request resync after specific wakeup events to ensure clean display state
   const auto wakeupReason = gpio.getWakeupReason();
