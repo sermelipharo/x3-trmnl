@@ -18,9 +18,22 @@ void HalDisplay::begin() {
     einkDisplay.setDisplayX3();
   }
 
-  LOG_INF("DISPLAY", "Initializing controller=%s (%ux%u)",
-          BoardConfig::ACTIVE.displayController == BoardConfig::DisplayController::UC8279 ? "UC8279" : "primary",
-          einkDisplay.getDisplayWidth(), einkDisplay.getDisplayHeight());
+  const char* controllerName = "unknown";
+  switch (BoardConfig::ACTIVE.displayController) {
+    case BoardConfig::DisplayController::UC8253:
+      controllerName = "UC8253";
+      break;
+    case BoardConfig::DisplayController::UC8279:
+      controllerName = "UC8279";
+      break;
+    case BoardConfig::DisplayController::SSD1677:
+      controllerName = "SSD1677";
+      break;
+    default:
+      break;
+  }
+  LOG_INF("DISPLAY", "Initializing controller=%s (%ux%u)", controllerName, einkDisplay.getDisplayWidth(),
+          einkDisplay.getDisplayHeight());
   einkDisplay.begin();
   LOG_INF("DISPLAY", "Controller initialized");
 

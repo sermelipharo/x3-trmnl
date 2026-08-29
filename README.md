@@ -174,6 +174,7 @@ window after each wake:
 
 ```
 pip install -U platformio
+git submodule sync --recursive   # required on clones made before the SDK submodule was renamed
 git submodule update --init --recursive
 cp platformio.example.ini platformio.local.ini   # edit as needed
 pio run
