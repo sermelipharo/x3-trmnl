@@ -42,5 +42,5 @@
 // servers compare this against their configured firmware_download_url to
 // decide whether to flag update_firmware:true in /api/display responses.
 #ifndef TRMNL_FIRMWARE_VERSION
-#define TRMNL_FIRMWARE_VERSION "0.1.0"
+#define TRMNL_FIRMWARE_VERSION "0.2.0"
 #endif
