@@ -23,6 +23,7 @@ class HalPowerManager {
   mutable int _batteryCachedPercent = 0;         // Last read battery percentage (0-100)
   mutable uint16_t _batteryCachedVoltageMV = 0;  // Last read battery voltage in millivolts
   mutable unsigned long _batteryLastPollMs = 0;  // Timestamp of last battery read in milliseconds
+  mutable unsigned long _batteryPercentLastPollMs = 0;  // Timestamp of last SOC read (separate from voltage)
 
   enum LockMode { None, NormalSpeed };
   LockMode currentLockMode = None;

@@ -88,7 +88,10 @@ void HalPowerManager::startDeepSleep(HalGPIO& gpio) const {
 uint16_t HalPowerManager::getBatteryPercentage() const {
   if (_batteryUseI2C) {
     const unsigned long now = millis();
-    if (_batteryLastPollMs != 0 && (now - _batteryLastPollMs) < BATTERY_POLL_MS) {
+    // Own poll window: getBatteryVoltageMV() runs first in the TRMNL cycle and
+    // stamps _batteryLastPollMs, so keying this off the shared timestamp
+    // returned the initial cached 0% without ever reading SOC.
+    if (_batteryPercentLastPollMs != 0 && (now - _batteryPercentLastPollMs) < BATTERY_POLL_MS) {
       return _batteryCachedPercent;
     }
 
@@ -97,19 +100,26 @@ uint16_t HalPowerManager::getBatteryPercentage() const {
     Wire.beginTransmission(I2C_ADDR_BQ27220);
     Wire.write(BQ27220_SOC_REG);
     if (Wire.endTransmission(false) != 0) {
-      _batteryLastPollMs = now;
+      _batteryPercentLastPollMs = now;
       return _batteryCachedPercent;
     }
     Wire.requestFrom(I2C_ADDR_BQ27220, (uint8_t)2);
     if (Wire.available() < 2) {
-      _batteryLastPollMs = now;
+      _batteryPercentLastPollMs = now;
       return _batteryCachedPercent;
     }
     const uint8_t lo = Wire.read();
     const uint8_t hi = Wire.read();
     const uint16_t soc = (hi << 8) | lo;
-    _batteryCachedPercent = soc > 100 ? 100 : soc;
-    _batteryLastPollMs = now;
+    if (soc == 0) {
+      // An unconfigured / unlearned gauge reports SOC=0 with the cell at 4 V;
+      // fall back to the voltage curve instead of reporting 0%.
+      const uint16_t mv = getBatteryVoltageMV();
+      _batteryCachedPercent = mv > 0 ? BatteryMonitor::percentageFromMillivolts(mv) : 0;
+    } else {
+      _batteryCachedPercent = soc > 100 ? 100 : soc;
+    }
+    _batteryPercentLastPollMs = now;
     return _batteryCachedPercent;
   }
   static const BatteryMonitor battery = BatteryMonitor(BAT_GPIO0);
